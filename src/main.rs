@@ -2,9 +2,10 @@ mod lc;
 
 use lc::*;
 use std::fmt;
+use std::{thread, time};
 
-const HEIGHT: usize = 5;
-const WIDTH: usize = 5;
+const HEIGHT: usize = 33;
+const WIDTH: usize = 71;
 
 fn rem(a: i32, b:usize) -> usize {
     let val = a % b as i32;
@@ -40,23 +41,34 @@ impl State {
    }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 struct Board {
     board: [[State; WIDTH]; HEIGHT]
 }
 
 impl fmt::Display for Board {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "╭─")?;
+        for _ in 0..WIDTH { write!(f, "──")?; }
+        write!(f, "─╮\n")?;
+
         for x in 0..HEIGHT {
+            write!(f, "│ ")?;
+
             for y in 0..WIDTH {
                 match self.board[x][y] {
-                    ALIVE => write!(f, "▣ ")?,
-                    DEAD => write!(f, "□ ")?
+                    ALIVE => write!(f, "██")?,
+                    // ALIVE => write!(f, "■ ")?,
+                    DEAD => write!(f, "  ")?
                 };
             }
-            write!(f, "\n")?;
+
+            write!(f, " │\n")?;
         }
-        write!(f, "")
+
+        write!(f, "╰─")?;
+        for _ in 0..WIDTH { write!(f, "──")?; }
+        write!(f, "─╯")
     }
 }
 
@@ -75,7 +87,7 @@ impl Board {
             .sum()
     }
 
-    fn new_board(self: &Self) -> Self {
+    fn next_board(self: &Self) -> Self {
         let mut board = Board::new();
 
         for x in 0..HEIGHT {
@@ -89,16 +101,34 @@ impl Board {
 }
 
 fn main() {
-    let example_board_0 = Board {
-        board: [
-            [ DEAD,  DEAD,  DEAD,  DEAD, DEAD],
-            [ DEAD,  DEAD, ALIVE,  DEAD, DEAD],
-            [ DEAD, ALIVE, ALIVE, ALIVE, DEAD],
-            [ DEAD,  DEAD, ALIVE,  DEAD, DEAD],
-            [ DEAD,  DEAD,  DEAD,  DEAD, DEAD],
-        ]
-    };
-    let example_board_1 = example_board_0.new_board();
-    println!("{example_board_1}");
+    let mut example_board_0 = glider();
+    // let mut example_board_0 = Board {
+    //     board: [
+    //         [ DEAD,  DEAD,  DEAD,  DEAD, DEAD],
+    //         [ DEAD,  DEAD, ALIVE,  DEAD, DEAD],
+    //         [ DEAD, ALIVE, ALIVE, ALIVE, DEAD],
+    //         [ DEAD,  DEAD, ALIVE,  DEAD, DEAD],
+    //         [ DEAD,  DEAD,  DEAD,  DEAD, DEAD],
+    //     ]
+    // };
+    // let example_board_1 = example_board_0.next_board();
+    // println!("{example_board_1}");
+    loop {
+        print!("\x1B[2J\x1B[1;1H");
+        println!("{example_board_0}");
+        let temp = example_board_0.next_board();
+        if temp == example_board_0 { break;}
+        example_board_0 = temp;
+        thread::sleep(time::Duration::from_millis(200));
+    }
 }
 
+fn glider() -> Board {
+    let mut board = Board::new();
+    board.board[0][1] = ALIVE;
+    board.board[1][2] = ALIVE;
+    board.board[2][0] = ALIVE;
+    board.board[2][1] = ALIVE;
+    board.board[2][2] = ALIVE;
+    board
+}
