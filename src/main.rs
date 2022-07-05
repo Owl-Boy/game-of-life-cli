@@ -7,7 +7,7 @@ use std::{thread, time};
 const HEIGHT: usize = 33;
 const WIDTH: usize = 71;
 
-fn rem(a: i32, b:usize) -> usize {
+fn remainder(a: i32, b:usize) -> usize {
     let val = a % b as i32;
     let ans =  if val < 0 { b as i32 + val } else { val };
     ans as usize
@@ -77,12 +77,12 @@ impl Board {
         Board{ board: [[DEAD; WIDTH]; HEIGHT]}
     }
 
-    fn alive_nbrs(self: &Self,x: usize, y: usize) -> u32 {
+    fn count_alive_nbrs(self: &Self,x: usize, y: usize) -> u32 {
         let x = x as i32;
         let y = y as i32;
         lc!(1 ;
             a <- (x-1)..=(x+1), b <- (y-1)..=(y+1); 
-            (a, b) != (x, y), self.board[rem(a, HEIGHT)][rem(b, WIDTH)].is_alive())
+            (a, b) != (x, y), self.board[remainder(a, HEIGHT)][remainder(b, WIDTH)].is_alive())
             .iter()
             .sum()
     }
@@ -92,8 +92,7 @@ impl Board {
 
         for x in 0..HEIGHT {
             for y in 0.. WIDTH {
-               board.board[x][y] = self.board[x][y]
-                   .next_state(self.alive_nbrs(x, y));
+               board.board[x][y] = self.board[x][y].next_state(self.count_alive_nbrs(x, y));
             }
         }
         board
@@ -102,23 +101,14 @@ impl Board {
 
 fn main() {
     let mut example_board_0 = glider();
-    // let mut example_board_0 = Board {
-    //     board: [
-    //         [ DEAD,  DEAD,  DEAD,  DEAD, DEAD],
-    //         [ DEAD,  DEAD, ALIVE,  DEAD, DEAD],
-    //         [ DEAD, ALIVE, ALIVE, ALIVE, DEAD],
-    //         [ DEAD,  DEAD, ALIVE,  DEAD, DEAD],
-    //         [ DEAD,  DEAD,  DEAD,  DEAD, DEAD],
-    //     ]
-    // };
-    // let example_board_1 = example_board_0.next_board();
-    // println!("{example_board_1}");
     loop {
-        print!("\x1B[2J\x1B[1;1H");
+        print!("\x1B[2J\x1B[1;1H");    // clears the screen
         println!("{example_board_0}");
+
         let temp = example_board_0.next_board();
         if temp == example_board_0 { break;}
         example_board_0 = temp;
+
         thread::sleep(time::Duration::from_millis(200));
     }
 }
