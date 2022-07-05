@@ -1,5 +1,7 @@
 mod lc;
+mod start_configs;
 
+use start_configs::*;
 use lc::*;
 use std::fmt;
 use std::{thread, time};
@@ -57,8 +59,8 @@ impl fmt::Display for Board {
 
             for y in 0..WIDTH {
                 match self.board[x][y] {
-                    ALIVE => write!(f, "██")?,
-                    // ALIVE => write!(f, "■ ")?,
+                    // ALIVE => write!(f, "██")?,
+                    ALIVE => write!(f, "■ ")?,
                     DEAD => write!(f, "  ")?
                 };
             }
@@ -97,28 +99,51 @@ impl Board {
         }
         board
     }
+
+    fn string_to_board(shape: &str) -> Self {
+        let mut board = Board::new();
+        let mut x = 0;
+        let mut y = 0;
+        for chr in shape.chars() {
+            match chr {
+                'O' => {
+                    board.board[x][y] = ALIVE;
+                    y += 1;
+                },
+                '.' => y += 1,
+                '\n' => {
+                    x +=1;
+                    y = 0;
+                }
+                _ => {},
+            };
+        }
+        board
+    }
 }
 
 fn main() {
-    let mut example_board_0 = glider();
+    // let mut example_board_0 = glider();
+    let mut example_board_1 = Board::string_to_board(_GLIDER_GUN);
     loop {
         print!("\x1B[2J\x1B[1;1H");    // clears the screen
-        println!("{example_board_0}");
+        println!("{example_board_1}");
 
-        let temp = example_board_0.next_board();
-        if temp == example_board_0 { break;}
-        example_board_0 = temp;
+        let temp = example_board_1.next_board();
+        if temp == example_board_1 { break;}
+        example_board_1 = temp;
 
         thread::sleep(time::Duration::from_millis(200));
     }
 }
 
-fn glider() -> Board {
-    let mut board = Board::new();
-    board.board[0][1] = ALIVE;
-    board.board[1][2] = ALIVE;
-    board.board[2][0] = ALIVE;
-    board.board[2][1] = ALIVE;
-    board.board[2][2] = ALIVE;
-    board
-}
+// fn glider() -> Board {
+//     let mut board = Board::new();
+//     board.board[0][1] = ALIVE;
+//     board.board[1][2] = ALIVE;
+//     board.board[2][0] = ALIVE;
+//     board.board[2][1] = ALIVE;
+//     board.board[2][2] = ALIVE;
+//     board
+// }
+
