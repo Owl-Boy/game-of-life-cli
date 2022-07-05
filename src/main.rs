@@ -59,8 +59,8 @@ impl fmt::Display for Board {
 
             for y in 0..WIDTH {
                 match self.board[x][y] {
-                    // ALIVE => write!(f, "██")?,
-                    ALIVE => write!(f, "■ ")?,
+                    ALIVE => write!(f, "██")?,
+                    // ALIVE => write!(f, "■ ")?,
                     DEAD => write!(f, "  ")?
                 };
             }
