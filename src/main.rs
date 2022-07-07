@@ -1,140 +1,74 @@
-mod lc;
-mod start_configs;
+const HEIGHT: usize = 5;
+const WIDTH: usize = 5;
 
-use start_configs::*;
-use lc::*;
-use std::fmt;
-use std::{thread, time};
+type State = bool;
+// type Board = [[State; WIDTH]; HEIGHT];
+type Board = Vec<Vec<State>>;
 
-const HEIGHT: usize = 33;
-const WIDTH: usize = 71;
+const ALIVE: State = true;
+const DEAD: State = false;
 
-fn remainder(a: i32, b:usize) -> usize {
-    let val = a % b as i32;
-    let ans =  if val < 0 { b as i32 + val } else { val };
-    ans as usize
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum State {
-    Dead,
-    Alive,
-}
-
-const ALIVE: State = State::Alive;
-const DEAD: State = State::Dead;
-
-impl State {
-   fn is_alive(self: &Self) -> bool {
-       match self {
-           &ALIVE => true,
-           &DEAD => false       
-       }
-   } 
-
-   fn next_state(self:Self, nbr_count: u32) -> State {
-       let stay_alive = nbr_count == 2 || nbr_count == 3;
-       let come_alive = nbr_count == 3;
-       if self.is_alive() {
-           if stay_alive { ALIVE } else { DEAD }
-       } else {
-           if come_alive { ALIVE } else { DEAD }
-       }
-   }
-}
-
-#[derive(Debug, PartialEq, Eq)]
-struct Board {
-    board: [[State; WIDTH]; HEIGHT]
-}
-
-impl fmt::Display for Board {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "╭─")?;
-        for _ in 0..WIDTH { write!(f, "──")?; }
-        write!(f, "─╮\n")?;
-
-        for x in 0..HEIGHT {
-            write!(f, "│ ")?;
-
-            for y in 0..WIDTH {
-                match self.board[x][y] {
-                    ALIVE => write!(f, "██")?,
-                    // ALIVE => write!(f, "■ ")?,
-                    DEAD => write!(f, "  ")?
-                };
-            }
-
-            write!(f, " │\n")?;
-        }
-
-        write!(f, "╰─")?;
-        for _ in 0..WIDTH { write!(f, "──")?; }
-        write!(f, "─╯")
+fn next_state(cell: State, no_of_alive_nbrs: i8) -> State{
+    if cell {
+        if no_of_alive_nbrs == 2 || no_of_alive_nbrs == 3
+            {ALIVE}
+        else
+            {DEAD}
+    } else {
+        if no_of_alive_nbrs == 3
+            {ALIVE}
+         else
+            {DEAD}
     }
 }
 
-impl Board {
-    fn new() -> Self {
-        Board{ board: [[DEAD; WIDTH]; HEIGHT]}
-    }
+fn no_of_alive_nbrs(board: &Board, x: usize, y:usize) -> i8{
+    let x = x as i32;
+    let y = y as i32;
+    let mut sum = 0;
+    for a in x-1..=x+1{
+        for b in y-1..=y+1{
+            if (a,b) != (x, y) && board[rem(x, HEIGHT)][rem(y, WIDTH)]
+                {sum += 1;};
+        };
+    };
+    sum
+}
 
-    fn count_alive_nbrs(self: &Self,x: usize, y: usize) -> u32 {
-        let x = x as i32;
-        let y = y as i32;
-        lc!(1 ;
-            a <- (x-1)..=(x+1), b <- (y-1)..=(y+1); 
-            (a, b) != (x, y), self.board[remainder(a, HEIGHT)][remainder(b, WIDTH)].is_alive())
-            .iter()
-            .sum()
-    }
+fn rem(numerator: i32, divisor: usize) -> usize{
+    let val = numerator % divisor as i32;
+    if val < 0
+        {(val + (divisor as i32)) as usize}
+    else
+        {val as usize}
+}
 
-    fn next_board(self: &Self) -> Self {
-        let mut board = Board::new();
-
-        for x in 0..HEIGHT {
-            for y in 0.. WIDTH {
-               board.board[x][y] = self.board[x][y].next_state(self.count_alive_nbrs(x, y));
-            }
-        }
-        board
-    }
-
-    fn string_to_board(shape: &str) -> Self {
-        let mut board = Board::new();
-        let mut x = 0;
-        let mut y = 0;
-        for chr in shape.chars() {
-            match chr {
-                'O' => {
-                    board.board[x][y] = ALIVE;
-                    y += 1;
-                },
-                '.' => y += 1,
-                '\n' => {
-                    x +=1;
-                    y = 0;
-                }
-                _ => {},
-            };
-        }
-        board
-    }
+fn next_board(board: &Board, height: &usize, width: &usize) -> Board{
+    // let mut new_board: Board = [[DEAD; WIDTH]; HEIGHT];
+    let mut new_board: Board = vec![vec![DEAD; *width]; *height];
+    for x in 0..HEIGHT{
+        for y in 0..WIDTH{
+            new_board[x][y] = next_state(board[x][y],
+                                         no_of_alive_nbrs(board, x, y));
+        };
+    };
+    new_board
 }
 
 fn main() {
+    println!("Hello, world!");
     // let mut example_board_0 = glider();
-    let mut example_board_1 = Board::string_to_board(_GLIDER_GUN);
-    loop {
-        print!("\x1B[2J\x1B[1;1H");    // clears the screen
-        println!("{example_board_1}");
+    // let mut example_board_1 = Board::string_to_board(_GLIDER_GUN);
+    // loop {
+    //     print!("\x1B[2J\x1B[1;1H");    // clears the screen
+    //     println!("{example_board_1}");
 
-        let temp = example_board_1.next_board();
-        if temp == example_board_1 { break;}
-        example_board_1 = temp;
+    //     let temp = example_board_1.next_board();
+    //     if temp == example_board_1 { break;}
+    //     example_board_1 = temp;
 
-        thread::sleep(time::Duration::from_millis(200));
-    }
+    //     thread::sleep(time::Duration::from_millis(200));
+    // }
 }
 
 // fn glider() -> Board {
