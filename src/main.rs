@@ -38,13 +38,13 @@ fn next_board(board: &Board, width: &usize, height: &usize) -> Board{
 							  width, height));
 	    if new_state {
 		new_board[x][y] = true;
-		println!("{}, {}", x, y);
+		// println!("{}, {}", x, y);
 	    };
 	    
 	    any_ = any_ || board[x][y];
 	}
     }
-    println!("{}", any_);
+    // println!("{}", any_);
     new_board
 }
 
@@ -52,15 +52,13 @@ fn no_of_alive_nbrs(board: &Board, x: usize, y:usize,
 		    width: &usize, height: &usize) -> i8{
     let x = x as i32;
     let y = y as i32;
-    let mut sum = 0;
-    for a in x-1..=x+1{
-        for b in y-1..=y+1{
-            if (a,b) != (x, y) && board[rem(x, *height)][rem(y, *width)]
-                {sum += 1;};
-        };
-    };
-    sum
+    lc!(1 ;
+        a <- (x-1)..=(x+1), b <- (y-1)..=(y+1); 
+        (a, b) != (x, y), board[rem(a, *height)][rem(b, *width)])
+        .iter()
+        .sum()
 }
+
 
 fn rem(numerator: i32, divisor: usize) -> usize{
     let val = numerator % divisor as i32;
@@ -137,7 +135,7 @@ fn any(board: &Board){
 	}
     }
     
-    println!("{any_}")
+    // println!("{any_}")
 }
 
 fn main() {
@@ -149,7 +147,7 @@ fn main() {
     any(&example_board_1);
     
     loop {
-        // print!("\x1B[2J\x1B[1;1H");    // clears the screen
+        print!("\x1B[2J\x1B[1;1H");    // clears the screen
 	print_board(&example_board_1, &width, &height);
 
         let temp = next_board(&example_board_1, &width, &height);
