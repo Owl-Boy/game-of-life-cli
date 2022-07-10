@@ -7,7 +7,6 @@ use std::fmt;
 use std::{thread, time};
 
 type State = bool;
-// type Board = [[State; WIDTH]; HEIGHT];
 type Board = Vec<Vec<State>>;
 
 const ALIVE: State = true;
@@ -28,23 +27,15 @@ fn next_state(cell: State, no_of_alive_nbrs: i8) -> State{
 }
 
 fn next_board(board: &Board, width: &usize, height: &usize) -> Board{
-    // let mut new_board: Board = [[DEAD; WIDTH]; HEIGHT];
     let mut new_board: Board = vec![vec![DEAD; *width]; *height];
     let mut any_ = false;
     for x in 0..*height{
         for y in 0..*width{
-	    let new_state =  next_state(board[x][y],
-                                         no_of_alive_nbrs(board, x, y,
-							  width, height));
-	    if new_state {
-		new_board[x][y] = true;
-		// println!("{}, {}", x, y);
-	    };
-	    
-	    any_ = any_ || board[x][y];
+	    new_board[x][y] =  next_state(board[x][y],
+                                          no_of_alive_nbrs(board, x, y,
+							   width, height));
 	}
     }
-    // println!("{}", any_);
     new_board
 }
 
@@ -116,35 +107,12 @@ fn print_board(board: &Board, width: &usize, height: &usize) {
     println!( "─╯")
 }
 
-// fn glider() -> Board {
-//     let mut board = Board::new();
-//     board.board[0][1] = ALIVE;
-//     board.board[1][2] = ALIVE;
-//     board.board[2][0] = ALIVE;
-//     board.board[2][1] = ALIVE;
-//     board.board[2][2] = ALIVE;
-//     board
-// }
-
-fn any(board: &Board){
-    let mut any_ = false;
-    
-    for row in board{
-	for cell in row{
-	    any_ = any_ || *cell;
-	}
-    }
-    
-    // println!("{any_}")
-}
-
 fn main() {
     println!("Hello, world!");
     let height = 50;
     let width = 50;
     // let mut example_board_0 = glider();
     let mut example_board_1 = string_to_board(_GLIDER_GUN, &width, &height);
-    any(&example_board_1);
     
     loop {
         print!("\x1B[2J\x1B[1;1H");    // clears the screen
