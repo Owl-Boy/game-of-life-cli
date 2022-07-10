@@ -1,5 +1,10 @@
-const HEIGHT: usize = 5;
-const WIDTH: usize = 5;
+mod lc;
+mod start_configs;
+
+use start_configs::*;
+use lc::*;
+use std::fmt;
+use std::{thread, time};
 
 type State = bool;
 // type Board = [[State; WIDTH]; HEIGHT];
@@ -22,13 +27,35 @@ fn next_state(cell: State, no_of_alive_nbrs: i8) -> State{
     }
 }
 
-fn no_of_alive_nbrs(board: &Board, x: usize, y:usize) -> i8{
+fn next_board(board: &Board, width: &usize, height: &usize) -> Board{
+    // let mut new_board: Board = [[DEAD; WIDTH]; HEIGHT];
+    let mut new_board: Board = vec![vec![DEAD; *width]; *height];
+    let mut any_ = false;
+    for x in 0..*height{
+        for y in 0..*width{
+	    let new_state =  next_state(board[x][y],
+                                         no_of_alive_nbrs(board, x, y,
+							  width, height));
+	    if new_state {
+		new_board[x][y] = true;
+		println!("{}, {}", x, y);
+	    };
+	    
+	    any_ = any_ || board[x][y];
+	}
+    }
+    println!("{}", any_);
+    new_board
+}
+
+fn no_of_alive_nbrs(board: &Board, x: usize, y:usize,
+		    width: &usize, height: &usize) -> i8{
     let x = x as i32;
     let y = y as i32;
     let mut sum = 0;
     for a in x-1..=x+1{
         for b in y-1..=y+1{
-            if (a,b) != (x, y) && board[rem(x, HEIGHT)][rem(y, WIDTH)]
+            if (a,b) != (x, y) && board[rem(x, *height)][rem(y, *width)]
                 {sum += 1;};
         };
     };
@@ -43,32 +70,52 @@ fn rem(numerator: i32, divisor: usize) -> usize{
         {val as usize}
 }
 
-fn next_board(board: &Board, height: &usize, width: &usize) -> Board{
-    // let mut new_board: Board = [[DEAD; WIDTH]; HEIGHT];
-    let mut new_board: Board = vec![vec![DEAD; *width]; *height];
-    for x in 0..HEIGHT{
-        for y in 0..WIDTH{
-            new_board[x][y] = next_state(board[x][y],
-                                         no_of_alive_nbrs(board, x, y));
+fn string_to_board(shape: &str, width: &usize, height: &usize) -> Board {
+    let mut board: Board = vec![vec![DEAD; *width]; *height];
+    let mut x = 0;
+    let mut y = 0;
+    for chr in shape.chars(){
+	match chr {
+            'O' => {
+                board[x][y] = ALIVE;
+                y += 1;
+            },
+            '.' => y += 1,
+            '\n' => {
+                x +=1;
+                y = 0;
+            }
+            _ => {},
         };
-    };
-    new_board
+    }
+    board
 }
 
-fn main() {
-    println!("Hello, world!");
-    // let mut example_board_0 = glider();
-    // let mut example_board_1 = Board::string_to_board(_GLIDER_GUN);
-    // loop {
-    //     print!("\x1B[2J\x1B[1;1H");    // clears the screen
-    //     println!("{example_board_1}");
 
-    //     let temp = example_board_1.next_board();
-    //     if temp == example_board_1 { break;}
-    //     example_board_1 = temp;
-
-    //     thread::sleep(time::Duration::from_millis(200));
-    // }
+fn print_board(board: &Board, width: &usize, height: &usize) {
+    print!("╭─");
+    for _ in 0..*width { print!("──"); }
+    print!("─╮\n");
+    
+    for x in 0..*height {
+        print!( "│ ");
+	
+        for y in 0..*width {
+	    
+            if board[x][y] {
+                print!( "██");
+	    }
+	    else{
+		print!( "  ");
+            };
+        }
+	
+        print!( " │\n");
+    }
+    
+    print!( "╰─");
+    for _ in 0..*width { print!( "──"); }
+    println!( "─╯")
 }
 
 // fn glider() -> Board {
@@ -81,3 +128,35 @@ fn main() {
 //     board
 // }
 
+fn any(board: &Board){
+    let mut any_ = false;
+    
+    for row in board{
+	for cell in row{
+	    any_ = any_ || *cell;
+	}
+    }
+    
+    println!("{any_}")
+}
+
+fn main() {
+    println!("Hello, world!");
+    let height = 50;
+    let width = 50;
+    // let mut example_board_0 = glider();
+    let mut example_board_1 = string_to_board(_GLIDER_GUN, &width, &height);
+    any(&example_board_1);
+    
+    loop {
+        // print!("\x1B[2J\x1B[1;1H");    // clears the screen
+	print_board(&example_board_1, &width, &height);
+
+        let temp = next_board(&example_board_1, &width, &height);
+	
+        if temp == example_board_1 { break;}
+        example_board_1 = temp;
+
+        thread::sleep(time::Duration::from_millis(200));
+    }
+}
