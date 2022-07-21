@@ -6,144 +6,123 @@ use lc::*;
 use std::fmt;
 use std::{thread, time};
 
-const HEIGHT: usize = 33;
-const WIDTH: usize = 71;
+type State = bool;
+type Board = Vec<Vec<State>>;
 
-fn remainder(a: i32, b:usize) -> usize {
-    let val = a % b as i32;
-    let ans =  if val < 0 { b as i32 + val } else { val };
-    ans as usize
+const ALIVE: State = true;
+const DEAD: State = false;
+
+fn next_state(cell: State, no_of_alive_nbrs: i8) -> State{
+    if cell {
+        if no_of_alive_nbrs == 2 || no_of_alive_nbrs == 3
+            {ALIVE}
+        else
+            {DEAD}
+    } else {
+        if no_of_alive_nbrs == 3
+            {ALIVE}
+         else
+            {DEAD}
+    }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum State {
-    Dead,
-    Alive,
+fn next_board(board: &Board, width: &usize, height: &usize) -> Board{
+    let mut new_board: Board = vec![vec![DEAD; *width]; *height];
+    let mut any_ = false;
+    for x in 0..*height{
+        for y in 0..*width{
+	    new_board[x][y] =  next_state(board[x][y],
+                                          no_of_alive_nbrs(board, x, y,
+							   width, height));
+	}
+    }
+    new_board
 }
 
-const ALIVE: State = State::Alive;
-const DEAD: State = State::Dead;
-
-impl State {
-   fn is_alive(self: &Self) -> bool {
-       match self {
-           &ALIVE => true,
-           &DEAD => false       
-       }
-   } 
-
-   fn next_state(self:Self, nbr_count: u32) -> State {
-       let stay_alive = nbr_count == 2 || nbr_count == 3;
-       let come_alive = nbr_count == 3;
-       if self.is_alive() {
-           if stay_alive { ALIVE } else { DEAD }
-       } else {
-           if come_alive { ALIVE } else { DEAD }
-       }
-   }
+fn no_of_alive_nbrs(board: &Board, x: usize, y:usize,
+		    width: &usize, height: &usize) -> i8{
+    let x = x as i32;
+    let y = y as i32;
+    lc!(1 ;
+        a <- (x-1)..=(x+1), b <- (y-1)..=(y+1); 
+        (a, b) != (x, y), board[rem(a, *height)][rem(b, *width)])
+        .iter()
+        .sum()
 }
 
-#[derive(Debug, PartialEq, Eq)]
-struct Board {
-    board: [[State; WIDTH]; HEIGHT]
+
+fn rem(numerator: i32, divisor: usize) -> usize{
+    let val = numerator % divisor as i32;
+    if val < 0
+        {(val + (divisor as i32)) as usize}
+    else
+        {val as usize}
 }
 
-impl fmt::Display for Board {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "╭─")?;
-        for _ in 0..WIDTH { write!(f, "──")?; }
-        write!(f, "─╮\n")?;
-
-        for x in 0..HEIGHT {
-            write!(f, "│ ")?;
-
-            for y in 0..WIDTH {
-                match self.board[x][y] {
-                    ALIVE => write!(f, "██")?,
-                    // ALIVE => write!(f, "■ ")?,
-                    DEAD => write!(f, "  ")?
-                };
+fn string_to_board(shape: &str, width: &usize, height: &usize) -> Board {
+    let mut board: Board = vec![vec![DEAD; *width]; *height];
+    let mut x = 0;
+    let mut y = 0;
+    for chr in shape.chars(){
+	match chr {
+            'O' => {
+                board[x][y] = ALIVE;
+                y += 1;
+            },
+            '.' => y += 1,
+            '\n' => {
+                x +=1;
+                y = 0;
             }
-
-            write!(f, " │\n")?;
-        }
-
-        write!(f, "╰─")?;
-        for _ in 0..WIDTH { write!(f, "──")?; }
-        write!(f, "─╯")
+            _ => {},
+        };
     }
+    board
 }
 
-impl Board {
-    fn new() -> Self {
-        Board{ board: [[DEAD; WIDTH]; HEIGHT]}
-    }
 
-    fn count_alive_nbrs(self: &Self,x: usize, y: usize) -> u32 {
-        let x = x as i32;
-        let y = y as i32;
-        lc!(1 ;
-            a <- (x-1)..=(x+1), b <- (y-1)..=(y+1); 
-            (a, b) != (x, y), self.board[remainder(a, HEIGHT)][remainder(b, WIDTH)].is_alive())
-            .iter()
-            .sum()
-    }
-
-    fn next_board(self: &Self) -> Self {
-        let mut board = Board::new();
-
-        for x in 0..HEIGHT {
-            for y in 0.. WIDTH {
-               board.board[x][y] = self.board[x][y].next_state(self.count_alive_nbrs(x, y));
-            }
-        }
-        board
-    }
-
-    fn string_to_board(shape: &str) -> Self {
-        let mut board = Board::new();
-        let mut x = 0;
-        let mut y = 0;
-        for chr in shape.chars() {
-            match chr {
-                'O' => {
-                    board.board[x][y] = ALIVE;
-                    y += 1;
-                },
-                '.' => y += 1,
-                '\n' => {
-                    x +=1;
-                    y = 0;
-                }
-                _ => {},
+fn print_board(board: &Board, width: &usize, height: &usize) {
+    print!("╭─");
+    for _ in 0..*width { print!("──"); }
+    print!("─╮\n");
+    
+    for x in 0..*height {
+        print!( "│ ");
+	
+        for y in 0..*width {
+	    
+            if board[x][y] {
+                print!( "██");
+	    }
+	    else{
+		print!( "  ");
             };
         }
-        board
+	
+        print!( " │\n");
     }
+    
+    print!( "╰─");
+    for _ in 0..*width { print!( "──"); }
+    println!( "─╯")
 }
 
 fn main() {
+    println!("Hello, world!");
+    let height = 50;
+    let width = 50;
     // let mut example_board_0 = glider();
-    let mut example_board_1 = Board::string_to_board(_GLIDER_GUN);
+    let mut example_board_1 = string_to_board(_GLIDER_GUN, &width, &height);
+    
     loop {
         print!("\x1B[2J\x1B[1;1H");    // clears the screen
-        println!("{example_board_1}");
+	print_board(&example_board_1, &width, &height);
 
-        let temp = example_board_1.next_board();
+        let temp = next_board(&example_board_1, &width, &height);
+	
         if temp == example_board_1 { break;}
         example_board_1 = temp;
 
         thread::sleep(time::Duration::from_millis(200));
     }
 }
-
-// fn glider() -> Board {
-//     let mut board = Board::new();
-//     board.board[0][1] = ALIVE;
-//     board.board[1][2] = ALIVE;
-//     board.board[2][0] = ALIVE;
-//     board.board[2][1] = ALIVE;
-//     board.board[2][2] = ALIVE;
-//     board
-// }
-
